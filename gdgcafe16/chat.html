@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>チャットアプリケーション</title>
+</head>
+<body>
+	<h1>チャットアプリケーションサンプル</h1>
+	<div>
+		<ul id="chatList"></ul>
+	</div>
+	<div>
+		<input type="text" size="50" id="chatText" />
+		<button id="chatSubmit" onClick="submit();">発言</button>
+	</div>
+	<script src="https://cdn.firebase.com/js/client/2.2.7/firebase.js"></script>
+	<script>
+		var currentUser;
+		var ref = new Firebase("https://shining-torch-7001.firebaseio.com/");
+		var chatText = document.getElementById("chatText");
+		var chatSubmit = document.getElementById("chatSubmit");
+		var chatList = document.getElementById("chatList");
+		function submit () {
+			if(!currentUser) return;
+			if(!chatText.value) { chatText.focus(); return;}
+			var data = {
+				uid: currentUser.uid, author: currentUser.github.displayName,
+				text: chatText.value, at: new Date().toUTCString(),
+				image: currentUser.github.profileImageURL
+			};
+			ref.push(data);
+		}
+
+		ref.on("child_added", function (snapshot) {
+			console.log("child_added", snapshot.val());
+			renderChat(snapshot.val());
+		});
+
+		function renderChat(message) {
+			var li = document.createElement("li");
+			var author = document.createElement("span")
+							.appendChild(document.createTextNode(message.author));
+			var text = document.createElement("span")
+							.appendChild(document.createTextNode(message.text));
+			var at = document.createElement("span")
+							.appendChild(document.createTextNode(new Date(message.at)));
+			var img = document.createElement("img");
+			img.setAttribute('src', message.image);
+			img.setAttribute('width', '32');
+			img.setAttribute('heigth', '32');
+			li.appendChild(img)
+			li.appendChild(author);
+			li.appendChild(text);
+			li.appendChild(at);
+			chatList.appendChild(li);
+		}
+
+		function auth() {
+			ref.authWithOAuthPopup("github", function(error, authData) {
+				if (error) {
+					console.log("Login Failed!", error);
+				} else {
+					console.log("Login Succeded", authData);
+					currentUser = authData;
+				}
+			}, {"remember": "default"});
+		}
+
+		ref.onAuth(function(authData) {
+			if (!authData) {
+				auth();
+			} else {
+				console.log("already logged in.", authData);
+				currentUser = authData;
+			}
+		});
+
+	</script>
+</body>
+</html>

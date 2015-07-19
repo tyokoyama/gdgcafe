@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Firebaseハンズオン</title>
+	<script>
+		function getValues() {
+			var ref = new Firebase("https://shining-torch-7001.firebaseio.com/").child("users");
+			ref.on("child_added", function (snapshot) {
+				console.log(snapshot);
+			});
+		}
+
+		function addValues() {
+			var ref = new Firebase("https://shining-torch-7001.firebaseio.com/").child("users");
+
+			ref.push({text: "Push!", at: new Date().getTime()});
+		}
+	</script>
+</head>
+<body>
+	<h1>Firebaseハンズオン</h1>
+	<script src="https://cdn.firebase.com/js/client/2.2.7/firebase.js"></script>
+	<script>
+		(function () {
+			// shining-torch-7001
+			// TODO: JavaScriptはここに書く。
+			var firebase = new Firebase("https://shining-torch-7001.firebaseio.com/");
+// 			firebase.set({text: "hi!", at: new Date().getTime()});
+// //			firebase.set({text: "ttyokoyama", at: new Date().getTime()});
+
+// 			var child = firebase.child("users");
+// 			child.push(
+// 				{text: "Push!", at: new Date().getTime()}
+// 			);
+// 			child.update({
+// 				text: "update2!", at: new Date().getTime()
+// 			});
+// 			child.push(
+// 				{text: "Push!", at: new Date().getTime()}
+// 			);
+
+			function auth() {
+				firebase.authWithOAuthPopup("github", function(error, authData) {
+					if (error) {
+						console.log("Login Failed!", error);
+					} else {
+						console.log("Login Succeded", authData);
+					}
+				}, {"remember": "default"});
+			}
+
+//			auth();
+
+			firebase.onAuth(function(authData) {
+				if (!authData) {
+					auth();
+				} else {
+					console.log("already logged in.", authData);
+				}
+
+				saveUser(authData);
+			});
+
+			function saveUser(authData) {
+				var ref = firebase.child("users").child(authData.uid);
+				ref.set(authData);
+			}
+
+			function retrieveData(path) {
+				var ref = new Firebase("https://shining-torch-7001.firebaseio.com/");
+				ref.once("value", function(snapshot) {
+					console.log(snapshot.val());
+				}, function(error) {
+					console.log(error);
+				});
+			}
+			retrieveData("users");
+
+			getValues();
+		}());
+	</script>
+	<button onclick="addValues()">Add</button>
+</body>
+</html>
